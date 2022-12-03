@@ -23,37 +23,62 @@ impl Hand {
             Scissors => Paper,
         }
     }
+
+    pub fn what_beats(&self) -> Self {
+        use Hand::*;
+        match *self {
+            Rock => Paper,
+            Paper => Scissors,
+            Scissors => Rock,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Game {
     elf_hand: Hand,
     my_hand: Hand,
+    needed_result: GameResult,
 }
 
 impl Game {
     pub fn new(elf_hand: Hand, my_hand: Hand) -> Self {
-        Self { elf_hand, my_hand }
+        Self {
+            elf_hand,
+            my_hand,
+            needed_result: GameResult::Win,
+        }
     }
 
-    pub fn from_chars(elf: char, me: char) -> Self {
-        let elf_hand = match elf {
+    pub fn from_chars(first: char, second: char) -> Self {
+        let elf_hand = match first {
             'A' => Hand::Rock,
             'B' => Hand::Paper,
             'C' => Hand::Scissors,
-            _ => panic!("unsupported char {elf:}"),
+            _ => panic!("unsupported char {first:}"),
         };
-        let my_hand = match me {
+        let my_hand = match second {
             'X' => Hand::Rock,
             'Y' => Hand::Paper,
             'Z' => Hand::Scissors,
-            _ => panic!("unsupported char {me:}"),
+            _ => panic!("unsupported char {second:}"),
         };
 
-        Self::new(elf_hand, my_hand)
+        let needed_result = match second {
+            'X' => GameResult::Loss,
+            'Y' => GameResult::Draw,
+            'Z' => GameResult::Win,
+            _ => panic!("unsupported char {second:}"),
+        };
+
+        Self {
+            elf_hand,
+            my_hand,
+            needed_result,
+        }
     }
 
-    pub fn my_result(&self) -> GameResult {
+    fn my_result(&self) -> GameResult {
         let elf_beats = self.elf_hand.beats();
         let my_beats = self.my_hand.beats();
         match (elf_beats, my_beats) {
@@ -66,11 +91,31 @@ impl Game {
     pub fn score(&self) -> i64 {
         (self.my_result() as i64) + (self.my_hand as i64)
     }
+
+    fn part2_my_hand(&self) -> Hand {
+        let beats_elf = self.elf_hand.what_beats();
+        match self.needed_result {
+            GameResult::Win => self.elf_hand.what_beats(),
+            GameResult::Draw => self.elf_hand,
+            GameResult::Loss => self.elf_hand.beats(),
+        }
+    }
+
+    pub fn part2_score(&self) -> i64 {
+        (self.needed_result as i64) + (self.part2_my_hand() as i64)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_part2_scores() {
+        assert_eq!(Game::from_chars('A', 'Y').part2_score(), 4);
+        assert_eq!(Game::from_chars('B', 'X').part2_score(), 1);
+        assert_eq!(Game::from_chars('C', 'Z').part2_score(), 7);
+    }
 
     #[test]
     fn test_scores() {

@@ -41,7 +41,7 @@ mod tests {
     #[test]
     fn check_one_line_works() -> eyre::Result<()> {
         let x = one_line(INPUT)?;
-        assert_eq!(Game::new(Hand::Paper, Hand::Rock), x.1);
+        assert_eq!(Game::from_chars('B', 'X'), x.1);
         Ok(())
     }
 
@@ -52,9 +52,9 @@ mod tests {
         assert_eq!(games.len(), 3);
         assert_eq!(
             vec![
-                Game::new(Hand::Paper, Hand::Rock),
-                Game::new(Hand::Rock, Hand::Scissors),
-                Game::new(Hand::Rock, Hand::Paper),
+                Game::from_chars('B', 'X'),
+                Game::from_chars('A', 'Z'),
+                Game::from_chars('A', 'Y'),
             ],
             games
         );
