@@ -1,5 +1,5 @@
 [package]
-name = "aoc"
+name = "day3"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 color-backtrace = "0.5.1"
 color-eyre = "0.6.2"
-day1 = { version = "0.1.0", path = "../day1" }
-day2 = { version = "0.1.0", path = "../day2" }
-day3 = { version = "0.1.0", path = "../day3" }
+ctor = "0.1.26"
 eyre = "0.6.8"
+nom = "7.1.1"
