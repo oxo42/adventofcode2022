@@ -11,4 +11,4 @@ color-eyre = "0.6.2"
 day1 = { version = "0.1.0", path = "../day1" }
 day2 = { version = "0.1.0", path = "../day2" }
 day3 = { version = "0.1.0", path = "../day3" }
-eyre = "0.6.8"
+day4 = { version = "0.1.0", path = "../day4" }

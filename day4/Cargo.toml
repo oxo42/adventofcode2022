@@ -1,5 +1,5 @@
 [package]
-name = "day3"
+name = "day4"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 color-backtrace = "0.5.1"
+color-eyre = "0.6.2"
 eyre = "0.6.8"
 nom = "7.1.1"
