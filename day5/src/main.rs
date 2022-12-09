@@ -1,3 +1,4 @@
+#![feature(get_many_mut)]
 #![allow(dead_code)]
 mod parser;
 
@@ -23,6 +24,15 @@ move 1 from 1 to 2
 pub struct Dock(Vec<Vec<Crate>>);
 
 impl Dock {
+    pub fn apply_9001(&mut self, mv: Move) {
+        let [src, dst] = self
+            .0
+            .get_many_mut([mv.source, mv.dest])
+            .expect("should be there");
+        let elems = src.drain((src.len() - mv.count)..);
+        dst.extend(elems);
+    }
+
     pub fn apply(&mut self, mv: Move) {
         for _ in 0..mv.count {
             let el = self.0[mv.source].pop().unwrap();
@@ -48,7 +58,9 @@ impl Display for Dock {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Crate(char);
+
 impl Debug for Crate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
@@ -103,6 +115,7 @@ fn transpose_rev<T>(v: Vec<Vec<Option<T>>>) -> Vec<Vec<T>> {
 
 fn main() -> color_eyre::Result<()> {
     let mut lines = include_str!("../input.txt").lines();
+    // let mut lines = INPUT.lines();
 
     let crate_lines: Vec<_> = lines
         .by_ref()
@@ -132,7 +145,7 @@ fn main() -> color_eyre::Result<()> {
     println!("{dock}");
 
     for mv in moves {
-        dock.apply(mv);
+        dock.apply_9001(mv);
     }
     println!("{dock}");
 
