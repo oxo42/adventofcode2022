@@ -118,7 +118,7 @@ fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
     // let lines: Vec<_> = INPUT
-        let lines: Vec<_> = include_str!("../input.txt")
+    let lines: Vec<_> = include_str!("../input.txt")
         .lines()
         .map(|l| (all_consuming(parse_line)(l)).finish().unwrap().1)
         .collect();
