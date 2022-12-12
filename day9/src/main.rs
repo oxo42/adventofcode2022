@@ -102,29 +102,6 @@ fn main() -> color_eyre::Result<()> {
     Ok(())
 }
 
-struct Engine {
-    head: Point<i32>,
-    tail: Point<i32>,
-    tail_locations: HashSet<Point<i32>>,
-}
-
-impl Debug for Engine {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Engine")
-            .field("head", &(&self.head.x, &self.head.y))
-            .field("tail", &(&self.tail.x, &self.tail.y))
-            .field(
-                "tail_locations",
-                &self
-                    .tail_locations
-                    .iter()
-                    .map(|p| (p.x, p.y))
-                    .collect::<Vec<_>>(),
-            )
-            .finish()
-    }
-}
-
 trait PointExt {
     fn is_touching(&self, other: &Point<i32>) -> bool;
     fn add_delta(&self, delta: &Point<i32>) -> Point<i32>;
@@ -144,25 +121,81 @@ impl PointExt for Point<i32> {
     }
 }
 
+struct Engine {
+    rope: Vec<Point<i32>>,
+    tail_locations: HashSet<Point<i32>>,
+}
+
+impl Debug for Engine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Engine")
+            .field("rope", &self.rope.iter().map(|p| (p.x, p.y)).collect_vec())
+            .field(
+                "tail_locations",
+                &self.tail_locations.iter().map(|p| (p.x, p.y)).collect_vec(),
+            )
+            .finish()
+    }
+}
+
 impl Engine {
     fn new() -> Self {
         Self {
-            head: point(0, 0),
-            tail: point(0, 0),
+            rope: vec![point(0, 0); 10],
             tail_locations: HashSet::from([point(0, 0)]),
         }
     }
     fn apply(&mut self, mv: Move) {
         // println!("Move: {:?}", mv);
+        let delta: Point<_> = mv.dir.point();
         for _ in 0..mv.count {
-            let delta: Point<_> = mv.dir.point();
-            self.head = self.head.add_delta(&delta);
-            if !self.head.is_touching(&self.tail) {
-                self.tail = self.head.sub_delta(&delta);
-                self.tail_locations.insert(self.tail.clone());
+            self.rope[0] = self.rope[0].add_delta(&delta);
+            for i in 1..self.rope.len() {
+                let diff = self.rope[i - 1].sub_delta(&self.rope[i]);
+                let (dx, dy) = match (diff.x, diff.y) {
+                    // overlapping
+                    (0, 0) => (0, 0),
+                    // touching up/left/down/right
+                    (0, 1) | (1, 0) | (0, -1) | (-1, 0) => (0, 0),
+                    // touching diagonally
+                    (1, 1) | (1, -1) | (-1, 1) | (-1, -1) => (0, 0),
+                    // need to move up/left/down/right
+                    (0, 2) => (0, 1),
+                    (0, -2) => (0, -1),
+                    (2, 0) => (1, 0),
+                    (-2, 0) => (-1, 0),
+                    // need to move to the right diagonally
+                    (2, 1) => (1, 1),
+                    (2, -1) => (1, -1),
+                    // need to move to the left diagonally
+                    (-2, 1) => (-1, 1),
+                    (-2, -1) => (-1, -1),
+                    // need to move up/down diagonally
+                    (1, 2) => (1, 1),
+                    (-1, 2) => (-1, 1),
+                    (1, -2) => (1, -1),
+                    (-1, -2) => (-1, -1),
+                    // 🆕 need to move diagonally
+                    (-2, -2) => (-1, -1),
+                    (-2, 2) => (-1, 1),
+                    (2, -2) => (1, -1),
+                    (2, 2) => (1, 1),
+                    _ => panic!("unhandled case: tail - head = {diff:?}"), //
+                };
+                self.rope[i].x += dx;
+                self.rope[i].y += dy;
+
+                // let (left, right) = self.rope.split_at_mut(split);
+                // let a = left.last().unwrap();
+                // if !a.is_touching(&right[0]) {
+                //     right[0] = a.sub_delta(&delta);
+                // }
             }
-            // println!("{:?}", self);
+            self.tail_locations
+                .insert(self.rope.last().unwrap().clone());
         }
+
+        // println!("{:?}", self);
     }
 
     fn count_tail_locations(&self) -> usize {
@@ -215,7 +248,7 @@ U 20
         }
         println!("{:?}", engine);
 
-        assert_eq!(13, engine.count_tail_locations());
+        assert_eq!(1, engine.count_tail_locations());
 
         Ok(())
     }
