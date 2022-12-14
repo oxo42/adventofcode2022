@@ -68,6 +68,7 @@ impl Operation {
 #[derive(Debug)]
 struct BusinessMachine {
     monkeys: Vec<RefCell<Monkey>>,
+    divisor_product: i64,
 }
 
 impl Display for BusinessMachine {
@@ -85,20 +86,27 @@ impl Display for BusinessMachine {
 }
 
 impl BusinessMachine {
+    fn new(monkeys: Vec<Monkey>) -> Self {
+        let divisor_product = monkeys.iter().map(|m| m.test_divisor).product();
+        let monkeys = monkeys.into_iter().map(RefCell::new).collect_vec();
+        Self {
+            monkeys,
+            divisor_product,
+        }
+    }
     fn round(&mut self) {
         for monkey_cell in &self.monkeys {
             let mut monkey = monkey_cell.borrow_mut();
             loop {
                 // inspect
-                let item = match monkey.items.pop_front() {
+                let mut item = match monkey.items.pop_front() {
                     Some(x) => x,
                     None => break,
                 };
                 monkey.inspections += 1;
+                item %= self.divisor_product;
                 // worry up
-                let item = monkey.operation.apply(item);
-                // worry down
-                let item = (item as f64 / 3f64).floor() as i64;
+                item = monkey.operation.apply(item);
                 // test
                 let dest_monkey = if item % monkey.test_divisor == 0 {
                     monkey.true_monkey
@@ -132,10 +140,9 @@ fn main() -> color_eyre::Result<()> {
     for m in &monkeys {
         println!("{:?}", m);
     }
-    let monkeys = monkeys.into_iter().map(RefCell::new).collect_vec();
-    let mut machine = BusinessMachine { monkeys };
+    let mut machine = BusinessMachine::new(monkeys);
     println!("{machine}");
-    for _ in 0..20 {
+    for _ in 0..10_000 {
         machine.round();
     }
     println!("{machine}");
@@ -151,12 +158,11 @@ mod tests {
     #[test]
     fn test_sample_input() -> color_eyre::Result<()> {
         let monkeys = parser::parse_monkeys(include_str!("sample.txt"))?;
-        let monkeys = monkeys.into_iter().map(RefCell::new).collect_vec();
-        let mut machine = BusinessMachine { monkeys };
-        for _ in 0..20 {
+        let mut machine = BusinessMachine::new(monkeys);
+        for _ in 0..10_000 {
             machine.round();
         }
-        assert_eq!(10605, machine.monkey_business());
+        assert_eq!(2713310158, machine.monkey_business());
         Ok(())
     }
 }
