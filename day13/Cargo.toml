@@ -12,6 +12,7 @@ itertools = "0.10.5"
 nom = "7.1.1"
 nom-supreme = "0.8.0"
 nom_locate = "4.0.0"
+serde = "1.0.151"
 
 [dev-dependencies]
 test-case = "2.2.2"

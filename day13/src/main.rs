@@ -12,6 +12,15 @@ enum Item {
     Value(i64),
 }
 
+// impl Item {
+//     fn with_slice<T>(&self, f: impl FnOnce(&[Item]) -> T) -> T {
+//         match self {
+//             Self::Collection(n) => f(&n[..]),
+//             Self::Value(n) => f(&[Self::Value(*n)]),
+//         }
+//     }
+// }
+
 impl Debug for Item {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -24,6 +33,12 @@ impl Debug for Item {
 impl From<Vec<i64>> for Item {
     fn from(v: Vec<i64>) -> Self {
         Item::Collection(v.into_iter().map(Into::into).collect())
+    }
+}
+
+impl From<VecDeque<Item>> for Item {
+    fn from(v: VecDeque<Item>) -> Self {
+        Item::Collection(v)
     }
 }
 
@@ -58,53 +73,44 @@ fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
     let input = include_str!("input.txt");
     let pairs = parse_input(input)?;
-    pairs.iter().for_each(|p| println!("{:?}", p));
+    println!("Got {} pairs", pairs.len());
 
     let corrects = sum_corrects(pairs);
     println!("Corrects: {}", corrects);
     Ok(())
 }
 
-fn is_correct_order(Pair(left, right): Pair) -> bool {
-    // dbg!(&left, &right);
+fn icp(Pair(left, right): Pair) -> bool {
     use Item::*;
     match (left, right) {
-        (Collection(l), Value(r)) => {
-            let mut new_pair = Pair::from((Collection(l), vec![r].into()));
-            is_correct_order(new_pair)
-        }
-        (Value(l), Collection(r)) => {
-            let new_pair = Pair::from((vec![l].into(), Collection(r)));
-            is_correct_order(new_pair)
-        }
-        (Collection(mut l), Collection(mut r)) => {
-            let l_head = l.pop_front();
-            if l_head.is_none() {
+        (Collection(mut l_collection), Collection(mut r_collection)) => {
+            let l_head = if let Some(l_head) = l_collection.pop_front() {
+                l_head
+            } else {
                 return true;
-            }
-            let r_head = r.pop_front();
-            if r_head.is_none() {
+            };
+            let r_head = if let Some(r_head) = r_collection.pop_front() {
+                r_head
+            } else {
                 return false;
-            }
-            let l_head = l_head.unwrap();
-            let r_head = r_head.unwrap();
-            let tail_pair = Pair::from((l, r));
+            };
             match (l_head, r_head) {
-                (Value(l), Value(r)) => {
-                    // dbg!(&l, &r);
-                    if l < r {
-                        true
-                    } else if l > r {
-                        false
-                    } else {
-                        is_correct_order(tail_pair)
+                (Value(ll), Value(rr)) => {
+                    if ll < rr {
+                        return true;
                     }
+                    if ll > rr {
+                        return false;
+                    }
+                    // if ll == rr
+                    icp(Pair::from((l_collection, r_collection)))
                 }
-                (l, r) => is_correct_order(Pair(l, r)) && is_correct_order(tail_pair),
+                (ll, rr) => icp(Pair(ll, rr)),
             }
         }
-
-        _ => todo!(),
+        (Collection(l), Value(r)) => icp(Pair::from((Collection(l), vec![r].into()))),
+        (Value(l), Collection(r)) => icp(Pair::from((vec![l].into(), Collection(r)))),
+        _ => unreachable!(),
     }
 }
 
@@ -112,12 +118,9 @@ fn sum_corrects(pairs: Vec<Pair>) -> usize {
     pairs
         .into_iter()
         .enumerate()
-        .filter_map(|(i, p)| match is_correct_order(p) {
-            true => {
-                println!("{}", i + 1);
-                Some(i + 1)
-            }
-            false => None,
+        .map(|(i, p)| match icp(p) {
+            true => (i + 1),
+            false => 0,
         })
         .sum()
 }
@@ -131,16 +134,19 @@ mod tests {
     #[test_case("[1,1,3,1,1]\n[1,1,5,1,1]\n")]
     #[test_case("[]\n[3]\n")]
     #[test_case("[[1],[2,3,4]]\n[[1],4]\n")]
+    #[test_case("[[4,4],4,4]\n[[4,4],4,4,4]\n")]
     fn test_correct_order(input: &str) {
         let pair: Pair = parse_input(input).unwrap().first().unwrap().clone();
-        assert!(is_correct_order(pair));
+        assert!(icp(pair));
     }
 
-    #[test_case("[[[]]]\n[[]]\n")]
     #[test_case("[9]\n[[8,7,6]]\n")]
+    #[test_case("[[[]]]\n[[]]\n")]
+    #[test_case("[7,7,7,7]\n[7,7,7]\n")]
+    #[test_case("[1,[2,[3,[4,[5,6,7]]]],8,9]\n[1,[2,[3,[4,[5,6,0]]]],8,9]\n")]
     fn test_incorrect_order(input: &str) {
         let pair: Pair = parse_input(input).unwrap().first().unwrap().clone();
-        assert!(!is_correct_order(pair));
+        assert!(!icp(pair));
     }
 
     #[test]
