@@ -75,13 +75,15 @@ impl Cave {
             .flat_map(|s| s.0.iter().map(|p| p.1))
             .max()
             .unwrap()
+            + 1 // part 2
             + 1;
         let max_col = scans
             .iter()
             .flat_map(|s| s.0.iter().map(|p| p.0))
             .max()
             .unwrap()
-            + 1;
+            + 1
+            + 500;
         // dbg!(max_row, max_col);
         let mut c = Cave(Grid::new(max_row as usize, max_col as usize));
         c.set(&Self::start(), Spot::Start);
@@ -136,7 +138,8 @@ impl Cave {
         let below_right = point + (1, 1);
         if self.get(below).is_none() {
             // gone off the bottom of the map
-            return None;
+            // return None; // part 1
+            return Some(point);
         }
         if self.get(below).unwrap() == Spot::Air {
             return Some(below);
@@ -144,7 +147,7 @@ impl Cave {
         if self.get(below_left).unwrap() == Spot::Air {
             return Some(below_left);
         }
-        if self.get(below_right).unwrap() == Spot::Air {
+        if self.get(below_right).expect(format!("{point:?}").as_str()) == Spot::Air {
             return Some(below_right);
         }
 
@@ -152,6 +155,7 @@ impl Cave {
         Some(point)
     }
 
+    /// Returns true when more to go
     fn drop_sand(&mut self) -> bool {
         let mut sand_point = Self::start();
         loop {
@@ -160,12 +164,17 @@ impl Cave {
                 // dropped off
                 return false;
             }
-            if next_point.unwrap() == sand_point {
+            let next_point = next_point.unwrap();
+            if next_point == Self::start() {
+                // part 2
+                return false;
+            }
+            if next_point == sand_point {
                 // We're not moving any more
                 self.set(&sand_point, Spot::Sand);
                 return true;
             }
-            sand_point = next_point.unwrap();
+            sand_point = next_point;
         }
     }
 }
@@ -185,7 +194,7 @@ fn main() -> color_eyre::Result<()> {
         if finished {
             break;
         }
-        sand+=1;
+        sand += 1;
     }
     println!("{cave}");
     println!("Sand: {sand}");
