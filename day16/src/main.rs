@@ -6,6 +6,7 @@ use maze::Maze;
 fn main() -> color_eyre::Result<()> {
     let input = include_str!("sample.txt");
     let mut maze = Maze::parse(input)?;
+    maze.valves.iter().for_each(|v| println!("{v:?}"));
     maze.release_pressure();
 
     println!("Pressure released: {}", maze.pressure_released);
