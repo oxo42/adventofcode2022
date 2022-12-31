@@ -93,7 +93,7 @@ impl Zone {
             .filter_map(|s| s.range_for_row(row)) //
             .sorted_by(|a, b| a.start().cmp(b.start()))
             .coalesce(|a, b| {
-                if a.contains(&b.start()){
+                if a.contains(&b.start()) {
                     let start = a.start().min(b.start());
                     let end = a.end().max(b.end());
                     Ok(*start..=*end)
@@ -112,8 +112,8 @@ impl Zone {
             })
             .expect("ranges to exist");
         let ranges = self.ranges_for_row(row);
-        let x = ranges[0].end()+1;
-        let p = Point(x as i64,row as i64);
+        let x = ranges[0].end() + 1;
+        let p = Point(x as i64, row as i64);
         // let p = self.brute_force_beacon_search(max).unwrap();
         p.tuning_frequency()
     }
@@ -143,7 +143,7 @@ mod tests {
         let input = include_str!("sample.txt");
         let zone = load_zone(input)?;
         let r = zone.ranges_for_row(11);
-        assert_eq!(vec![(0..=13),(15..=20)], r);
+        assert_eq!(vec![(0..=13), (15..=20)], r);
         Ok(())
     }
 
