@@ -1,30 +1,20 @@
 #![allow(unused)]
 
-use std::fmt::Display;
+use std::{fmt::Display, ops::RangeInclusive};
 
 use grid::Grid;
 use itertools::{iproduct, Itertools};
 use point::Point;
+use sensor::Sensor;
 
 mod parser;
 mod point;
+mod sensor;
 
-pub struct Sensor {
-    location: Point,
-    beacon: Point,
-    exclusion_distance: u64,
-}
-
-impl From<(Point, Point)> for Sensor {
-    fn from((location, beacon): (Point, Point)) -> Self {
-        let exclusion_distance = location.distance(&beacon);
-        Self {
-            location,
-            beacon,
-            exclusion_distance,
-        }
-    }
-}
+#[cfg(not(test))]
+const MAX: usize = 4_000_000;
+#[cfg(test)]
+const MAX: usize = 20;
 
 struct Zone {
     sensors: Vec<Sensor>,
@@ -97,9 +87,35 @@ impl Zone {
             .find(|p| !self.is_clear(p))
     }
 
+    fn ranges_for_row(&self, row: usize) -> Vec<RangeInclusive<usize>> {
+        self.sensors
+            .iter()
+            .filter_map(|s| s.range_for_row(row)) //
+            .sorted_by(|a, b| a.start().cmp(b.start()))
+            .coalesce(|a, b| {
+                if a.contains(&b.start()){
+                    let start = a.start().min(b.start());
+                    let end = a.end().max(b.end());
+                    Ok(*start..=*end)
+                } else {
+                    Err((a, b))
+                }
+            })
+            .collect()
+    }
+
     fn tuning_frequency(&self, max: usize) -> i64 {
-        let p = self.brute_force_beacon_search(max).unwrap();
-        p.0 * 4000000 + p.1
+        let row = (0..MAX)
+            .find(|row| {
+                let r = self.ranges_for_row(*row);
+                r.len() > 1
+            })
+            .expect("ranges to exist");
+        let ranges = self.ranges_for_row(row);
+        let x = ranges[0].end()+1;
+        let p = Point(x as i64,row as i64);
+        // let p = self.brute_force_beacon_search(max).unwrap();
+        p.tuning_frequency()
     }
 }
 
@@ -111,9 +127,9 @@ fn load_zone(input: &str) -> color_eyre::Result<Zone> {
 fn main() -> color_eyre::Result<()> {
     let input = include_str!("input.txt");
     let zone = load_zone(input)?;
+
     println!("Num clear on row {}", zone.num_clear_on_row(2_000_000));
-    let max = 4_000_000;
-    println!("Tuning freq {}", zone.tuning_frequency(max));
+    println!("Tuning freq {}", zone.tuning_frequency(MAX));
 
     Ok(())
 }
@@ -121,6 +137,16 @@ fn main() -> color_eyre::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn range_for_sample_11() -> color_eyre::Result<()> {
+        let input = include_str!("sample.txt");
+        let zone = load_zone(input)?;
+        let r = zone.ranges_for_row(11);
+        assert_eq!(vec![(0..=13),(15..=20)], r);
+        Ok(())
+    }
+
     #[test]
     fn test_zone_checks_out() -> color_eyre::Result<()> {
         let input = include_str!("sample.txt");
