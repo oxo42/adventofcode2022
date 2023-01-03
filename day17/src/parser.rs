@@ -23,7 +23,7 @@ fn line(i: Span) -> IResult<Vec<Jet>> {
     many1(alt((left, right)))(i)
 }
 
-fn parse_line(i: &str) -> color_eyre::Result<Vec<Jet>> {
+pub fn parse_line(i: &str) -> color_eyre::Result<Vec<Jet>> {
     all_consuming(line)(i.into())
         .finish()
         .map_err(|e| color_eyre::eyre::eyre!("{e:?}"))
