@@ -8,8 +8,9 @@ pub enum Rock {
     I = 3,
     Box = 4,
 }
+
 impl Rock {
-    pub fn height(&self) -> usize {
+    pub fn height(&self) -> isize {
         use Rock::*;
         match self {
             Dash => 1,
@@ -19,7 +20,30 @@ impl Rock {
             Box => 2,
         }
     }
+
+    pub fn places_iter(&self) -> std::vec::IntoIter<(isize, isize)> {
+        use Rock::*;
+        match self {
+            Dash => vec![(0, 0), (1, 0), (2, 0), (3, 0)].into_iter(),
+            Plus => vec![(1, 0), (1, 1), (1, 2), (0, 1), (2, 1)].into_iter(),
+            Elle => vec![(2, 0), (2, 1), (2, 2), (1, 2), (0, 2)].into_iter(),
+            I => vec![(0, 0), (0, 1), (0, 2), (0, 3)].into_iter(),
+            Box => vec![(0, 0), (0, 1), (1, 0), (1, 1)].into_iter(),
+        }
+    }
 }
+
+pub struct RockPlaceIter {
+    rock: Rock,
+}
+
+// impl Iterator for RockPlaceIter {
+//     type Item = (isize,isize);
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         match self.rock
+//     }
+// }
 
 pub struct RockIterator {
     item: Rock,
