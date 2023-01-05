@@ -1,5 +1,7 @@
 use num_derive::{FromPrimitive, ToPrimitive};
 
+use crate::pos::Pos;
+
 #[derive(Debug, Eq, PartialEq, FromPrimitive, ToPrimitive, Clone, Copy)]
 pub enum Rock {
     Dash = 0,
@@ -21,15 +23,19 @@ impl Rock {
         }
     }
 
-    pub fn places_iter(&self) -> std::vec::IntoIter<(isize, isize)> {
+    pub fn places_iter(&self) -> impl Iterator<Item = (isize, isize)> {
         use Rock::*;
         match self {
             Dash => vec![(0, 0), (1, 0), (2, 0), (3, 0)].into_iter(),
-            Plus => vec![(1, 0), (1, 1), (1, 2), (0, 1), (2, 1)].into_iter(),
-            Elle => vec![(2, 0), (2, 1), (2, 2), (1, 2), (0, 2)].into_iter(),
-            I => vec![(0, 0), (0, 1), (0, 2), (0, 3)].into_iter(),
-            Box => vec![(0, 0), (0, 1), (1, 0), (1, 1)].into_iter(),
+            Plus => vec![(1, 0), (1, -1), (1, -2), (0, -1), (2, -1)].into_iter(),
+            Elle => vec![(2, 0), (2, -1), (2, -2), (1, -2), (0, -2)].into_iter(),
+            I => vec![(0, 0), (0, -1), (0, -2), (0, -3)].into_iter(),
+            Box => vec![(0, 0), (0, -1), (1, 0), (1, -1)].into_iter(),
         }
+    }
+
+    pub fn pos_iter(&self, pos: Pos) -> impl Iterator<Item = Pos> {
+        self.places_iter().map(move |p| pos + p)
     }
 }
 

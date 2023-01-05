@@ -16,3 +16,6 @@ nom_locate = "4.0.0"
 num = "0.4.0"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
+
+[dev-dependencies]
+test-case = "2.2.2"

@@ -24,7 +24,7 @@ fn line(i: Span) -> IResult<Vec<Jet>> {
 }
 
 pub fn parse_line(i: &str) -> color_eyre::Result<Vec<Jet>> {
-    let i = i.strip_suffix("\n").unwrap();
+    let i = i.strip_suffix('\n').unwrap();
     all_consuming(line)(i.into())
         .finish()
         .map_err(|e| color_eyre::eyre::eyre!("{e:?}"))
